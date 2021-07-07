@@ -8,19 +8,19 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import javax.ejb.EJB;
+import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-import mn.mobicom.cmn.logger.Log;
-import org.json.JSONObject;
 
 /**
  *
@@ -29,16 +29,43 @@ import org.json.JSONObject;
 @Path("api")
 public class Resource {
 
-    @EJB
-    ConfigController configController;
+    @Context
+    private HttpServletRequest httpServletRequest;
+
+    @Path("admin/config/reload/file")
+    @GET
+    @Produces(MediaType.TEXT_PLAIN)
+    public Response configFileReload(@Context UriInfo ui) throws Exception {
+        return Response.ok(ConfigController.getInstance().reload()).build();
+    }
+
+    @Path("receive")
+    @GET
+    @Produces(MediaType.TEXT_PLAIN)
+    public Response receiveGET(@Context UriInfo ui) throws Exception {
+        String responseString = "ok";
+
+        try {
+            Enumeration parameters = httpServletRequest.getParameterNames();
+            while (parameters.hasMoreElements()) {
+                Object pname = parameters.nextElement();
+                System.out.println("name=" + pname + ", class=" + pname.getClass().getCanonicalName());
+            }
+
+        } catch (Exception e) {
+            responseString = "Failed: " + e.getMessage();
+        }
+
+        return Response.ok(responseString).build();
+    }
 
     @Path("recharge")
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public DataRechargeRequest Recharge(@Context UriInfo ui) throws Exception {
+    public Response recharge(@Context UriInfo ui) throws Exception {
 //        Log.create("Test log")
 //                .add("isdn", isdn)
-//                .add("price", price)
+//                .add("price", price)W
 //                .add("bagts", bagts)
 //                .info();
         MultivaluedMap<String, String> queryParams = ui.getQueryParameters();
@@ -49,7 +76,7 @@ public class Resource {
             //todo log ruleId 1-ees olon bna, esvel hooson
             throw new Exception();
         }
-        if (configController.getString(ConfigEnums.RULEID + ruleIds.get(0)).isEmpty()) {
+        if (ConfigController.getInstance().getString(ConfigEnums.RULEID + ruleIds.get(0)).isEmpty()) {
             //todo log config dotor baihgu bna
             throw new Exception();
         }
@@ -69,15 +96,14 @@ public class Resource {
 
         Map<String, String> params = prepareParameters(queryParams);
 
-        String jsonString = configController.getString((ConfigEnums.BODY).toString());
+        String jsonString = ConfigController.getInstance().getString((ConfigEnums.BODY).toString());
 
         for (Map.Entry<String, String> param : params.entrySet()) {
             String key = "$" + param.getKey();
             jsonString = jsonString.replace(key, param.getValue());
         }
 
-        JSONObject json = new JSONObject(jsonString);
-
+//        JSONObject json = new JSONObject(jsonString);
         try {
 //            DataSendRequest sendReq = new DataSendRequest(configController.getString("URL" + ruleId), configController.getString("METHOD" + ruleId), configController.getString("CONTENTTYPE" + ruleId));
 //            new Worker(sendReq).goy(req);
@@ -86,7 +112,7 @@ public class Resource {
             //todo log
             throw new Exception();
         }
-        return req;
+        return Response.ok().build();
     }
 
     private Map<String, String> prepareParameters(MultivaluedMap<String, String> queryParameters) {

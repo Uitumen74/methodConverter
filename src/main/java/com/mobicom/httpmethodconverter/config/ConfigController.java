@@ -6,51 +6,29 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Properties;
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
-import javax.ejb.Singleton;
-import javax.ejb.Startup;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.core.config.Configurator;
 
 /**
  *
  * @author uitumen.t
  */
-@Singleton
-@Startup
-@Path("config")
 public class ConfigController {
 
     private static final Logger LOG = LogManager.getLogger(ConfigController.class.getCanonicalName());
 
+    private static final ConfigController instance = new ConfigController();
+
     private Properties properties;
 
-    @PostConstruct
-    public void setup() {
-        this.reload();
+    public static ConfigController getInstance() {
+        return instance;
     }
 
-    @PreDestroy
-    public void clear() {
-        if (properties != null) {
-            properties.clear();
-        }
-    }
-
-    @GET
-    @Produces(MediaType.TEXT_PLAIN)
     public String reload() {
         String appConfig = System.getProperty("httpmethodconverter.config.path");
-        String logConfig = System.getProperty("httpmethodconverter.logger.path");
 //        String logConfig = System.getProperty("nice.config.path") + "/application/nice-sample/nice-sample-log4j2.xml";
 
-        Configurator.initialize(null, logConfig);
         FileInputStream inputStream = null;
         try {
             inputStream = new FileInputStream(appConfig);
@@ -91,4 +69,5 @@ public class ConfigController {
             throw new Exception();
         }
     }
+
 }

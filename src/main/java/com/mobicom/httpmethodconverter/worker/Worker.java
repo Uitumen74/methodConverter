@@ -10,22 +10,20 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import javax.ejb.EJB;
+import javax.ejb.Stateless;
 
 /**
  *
  * @author uitumen.t
  */
+@Stateless
 public class Worker {
 
-    @EJB
-    ConfigController configController;
-
-    private final DataSendRequest sendReq;
-
-    public Worker(DataSendRequest sendReq) {
-        this.sendReq = sendReq;
-    }
+    private DataSendRequest sendReq;
+//
+//    public Worker(DataSendRequest sendReq) {
+//        this.sendReq = sendReq;
+//    }
 
     public void goy(DataRechargeRequest req) throws Exception {
         executePost("", "");
