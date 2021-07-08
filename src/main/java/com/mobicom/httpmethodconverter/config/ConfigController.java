@@ -19,21 +19,26 @@ public class ConfigController {
 
     private static final ConfigController instance = new ConfigController();
 
+    private static final String appConfig = System.getProperty("httpmethodconverter.config.path");
+
     private Properties properties;
 
     public static ConfigController getInstance() {
         return instance;
     }
 
+    public static void getLog(String logText) {
+        LOG.info(logText, appConfig);
+    }
+
     public String reload() {
-        String appConfig = System.getProperty("httpmethodconverter.config.path");
-//        String logConfig = System.getProperty("nice.config.path") + "/application/nice-sample/nice-sample-log4j2.xml";
 
         FileInputStream inputStream = null;
         try {
             inputStream = new FileInputStream(appConfig);
             properties = new Properties();
             properties.load(inputStream);
+
         } catch (IOException ex) {
             LOG.error("Config reload error", ex);
         } finally {
@@ -69,5 +74,4 @@ public class ConfigController {
             throw new Exception();
         }
     }
-
 }
