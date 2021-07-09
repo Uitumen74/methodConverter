@@ -29,11 +29,11 @@ import javax.ws.rs.core.UriInfo;
  */
 @Path("api")
 public class Resource {
-
+    
     @EJB
     Worker work;
     private String responseString = "ok";
-
+    
     @Context
     private HttpServletRequest httpServletRequest;
 
@@ -44,53 +44,61 @@ public class Resource {
 //    public Response test() {
 //        return Response.ok().build();
 //    }
-
+    @Path("recievereq")
+    @POST
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response service(String json) {
+        String result = "Record entered: " + json;
+//        LoggerUtil.getLogger().info("recieved: ", json);
+//        LoggerUtil.getLogger().info("response: ", result);
+        ConfigController.getLog(json);
+        return Response.status(201).entity(result).build();
+    }
+    
     @Path("admin/config/reload/file")
     @GET
     @Produces(MediaType.TEXT_PLAIN)
     public Response configFileReload(@Context UriInfo ui) throws Exception {
         return Response.ok(ConfigController.getInstance().reload()).build();
     }
-
+    
     @Path("receive")
     @GET
     @Produces(MediaType.TEXT_PLAIN)
     public Response receiveGET(@Context UriInfo ui) throws Exception {
-
+        
         try {
             Enumeration parameters = httpServletRequest.getParameterNames();
             while (parameters.hasMoreElements()) {
                 Object pname = parameters.nextElement();
                 System.out.println("name=" + pname + ", class=" + pname.getClass().getCanonicalName());
             }
-
+            
         } catch (Exception e) {
             responseString = "Failed: " + e.getMessage();
         }
-
+        
         return Response.ok(responseString).build();
     }
-
+    
     @Path("recharge")
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response recharge(@Context UriInfo ui) {
         try {
-
+            
             MultivaluedMap<String, String> queryParams = ui.getQueryParameters();
             List<String> ruleIds = queryParams.get((RequestEnums.ruleId).toString());
             Map<String, String> params = Worker.prepareParameters(queryParams);
 
             //RULEID-g shalgaj bna
             work.ruleIdChecker(ruleIds);
-
+            
             work.requestSender(params);
 
             //        final String uuid = UUID.randomUUID().toString().replace("-", "");
-            Date date = Calendar.getInstance().getTime();
-            DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss Z");
-//        String strDate = dateFormat.format(date);
-
+          
         } catch (Exception e) {
             //todo log
             responseString = "Failed: " + e.getMessage();

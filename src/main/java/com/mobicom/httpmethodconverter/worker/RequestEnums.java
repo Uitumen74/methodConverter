@@ -10,5 +10,6 @@ package com.mobicom.httpmethodconverter.worker;
  * @author uitumen.t
  */
 public enum RequestEnums {
-    ruleId
+    ruleId,
+    idsn
 }

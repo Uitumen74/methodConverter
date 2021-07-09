@@ -3,10 +3,15 @@ package com.mobicom.httpmethodconverter.worker;
 import com.mobicom.httpmethodconverter.config.ConfigController;
 import com.mobicom.httpmethodconverter.models.DataSendRequest;
 import java.io.BufferedReader;
+import java.io.DataOutputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -48,66 +53,73 @@ public class Worker {
         return parameters;
     }
 
-    public void requestSender(Map<String, String> requestParams) throws Exception {
+    public void requestSender(Map<String, String> requestParams) {
         try {
+            trimIsdn(requestParams.get(RequestEnums.idsn));
+            Date date = Calendar.getInstance().getTime();
+            DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss Z");
+            String strDate = dateFormat.format(date);
+
             String jsonString = ConfigController.getInstance().getString((ConfigEnums.BODY + requestParams.get((RequestEnums.ruleId).toString())));
+
+            jsonString = jsonString.replace("$date", strDate);
 
             for (Map.Entry<String, String> param : requestParams.entrySet()) {
                 String key = "$" + param.getKey();
                 jsonString = jsonString.replace(key, param.getValue());
             }
-            
-//            {
-//  "param1": "1",
-//  "param2": "2",
-//  "param3": "3"
-//}
-            JSONObject jsonObject = new JSONObject(jsonString);
-            JSONObject json = new JSONObject(jsonString);
-            String n = executePost(jsonString);
-            System.out.println(n);
+            sendingPostRequest(jsonString);
+//            System.out.println(n);
         } catch (Exception e) {
             System.out.println("Aldaa bol : " + e.getMessage());
             e.printStackTrace();
         }
     }
-//
-//    private void httpSender(String json) {
-//        try {
-//            URL url = new URL("https://tumee.requestcatcher.com/");
-//        } catch (Exception ex) {
-//            System.out.println("ex aldaa : " + ex);
-//        }
-//    }
 
-    private String executePost(String urlParameters) {
+    private void sendingPostRequest(String content) {
+        String url = "http://127.0.0.1:8080/httpMethodConverter/rest/api/recievereq";
         try {
-            //Create connection
-            URL url = new URL("https://z-wallet.candy.mn:443/rest/dummy");
-            HttpURLConnection con = (HttpURLConnection) url.openConnection();
+            URL obj = new URL(url);
+            HttpURLConnection con = (HttpURLConnection) obj.openConnection();
+
+            //Setting Basic Post request
             con.setRequestMethod("POST");
-            con.setRequestProperty("Content-Type", "application/json; utf-8");
-            con.setRequestProperty("Accept", "application/json");
+            con.setRequestProperty("Accept-Language", "application/json; utf-8");
+            con.setRequestProperty("Content-Type", "application/json");
+
+            //Send post request
             con.setDoOutput(true);
-            String jsonInputString = urlParameters;
-            try (OutputStream os = con.getOutputStream()) {
-                byte[] input = jsonInputString.getBytes("utf-8");
-                os.write(input, 0, input.length);
+            DataOutputStream wr = new DataOutputStream(con.getOutputStream());
+            wr.writeBytes(content);
+            wr.flush();
+            wr.close();
+
+            //Response
+            int reponseCode = con.getResponseCode();
+//            LoggerUtil.getLogger().info("Sending Post request to URL : " + url);
+//            LoggerUtil.getLogger().info("Post Data : " + content);
+//            LoggerUtil.getLogger().info("Response Code : " + reponseCode);
+
+            BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
+            String output;
+            StringBuffer response = new StringBuffer();
+
+            while ((output = in.readLine()) != null) {
+                response.append(output);
             }
-            try (BufferedReader br = new BufferedReader(
-                    new InputStreamReader(con.getInputStream(), "utf-8"))) {
-                StringBuilder response = new StringBuilder();
-                String responseLine = null;
-                while ((responseLine = br.readLine()) != null) {
-                    response.append(responseLine.trim());
-                }
-                System.out.println(response.toString());
-            }
-            return "ok";
+            in.close();
+
+//            LoggerUtil.getLogger().info("Response : " + response.toString());
         } catch (Exception e) {
-            e.printStackTrace();
-            return null;
+//            LoggerUtil.getLogger().error("Exception on sendingPostRequest : " + e);
         }
     }
 
+    private String trimIsdn(String isdn) {
+        isdn = isdn.trim();
+        if (isdn.length() > 8 && isdn.substring(0, 3).equals("976")) {
+            return isdn.substring(3, isdn.length());
+        }
+        return isdn;
+    }
 }
