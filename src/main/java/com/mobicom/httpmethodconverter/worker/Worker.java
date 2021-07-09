@@ -55,18 +55,20 @@ public class Worker {
 
     public void requestSender(Map<String, String> requestParams) {
         try {
-            trimIsdn(requestParams.get(RequestEnums.idsn));
             Date date = Calendar.getInstance().getTime();
             DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss Z");
             String strDate = dateFormat.format(date);
-
             String jsonString = ConfigController.getInstance().getString((ConfigEnums.BODY + requestParams.get((RequestEnums.ruleId).toString())));
-
             jsonString = jsonString.replace("$date", strDate);
 
             for (Map.Entry<String, String> param : requestParams.entrySet()) {
                 String key = "$" + param.getKey();
-                jsonString = jsonString.replace(key, param.getValue());
+                if (key.equals("$isdn")) {
+                    String isdn = trimIsdn(param.getValue());
+                    jsonString = jsonString.replace(key, isdn);
+                } else {
+                    jsonString = jsonString.replace(key, param.getValue());
+                }
             }
             sendingPostRequest(jsonString);
 //            System.out.println(n);
