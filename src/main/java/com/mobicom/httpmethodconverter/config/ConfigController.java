@@ -8,8 +8,6 @@ import java.util.Date;
 import java.util.Properties;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.ThreadContext;
-import org.apache.logging.log4j.core.config.Configurator;
 
 /**
  *
@@ -17,12 +15,9 @@ import org.apache.logging.log4j.core.config.Configurator;
  */
 public class ConfigController {
 
-//    private static final Logger LOG = LogManager.getLogger(ConfigController.class.getCanonicalName());
-    private static Logger LOG = null;
+    private static final Logger LOG = LogManager.getLogger(ConfigController.class.getCanonicalName());
 
     private static final ConfigController instance = new ConfigController();
-
-    private static final String appConfig = System.getProperty("httpmethodconverter.config.path");
 
     private Properties properties;
 
@@ -30,20 +25,8 @@ public class ConfigController {
         return instance;
     }
 
-    public static void initialLogger(String loggerPath) throws IOException {
-
-        Configurator.initialize(null, loggerPath);
-
-        ThreadContext.put("rid", "httpMethodConverter");
-        LOG = LogManager.getLogger(ConfigController.class.getCanonicalName());
-        LOG.info("Logger successfully loaded.");
-    }
-
-    public static Logger getLogger() {
-        return LOG;
-    }
-
     public String reload() {
+        String appConfig = System.getProperty("httpmethodconverter.config.path");
 
         FileInputStream inputStream = null;
         try {
@@ -51,6 +34,7 @@ public class ConfigController {
             properties = new Properties();
             properties.load(inputStream);
 
+            LOG.info("Config reloaded: {}", appConfig);
         } catch (IOException ex) {
             LOG.error("Config reload error", ex);
         } finally {
@@ -63,7 +47,6 @@ public class ConfigController {
             }
         }
 
-        LOG.info("Config reloaded: {}", appConfig);
         return appConfig;
     }
 

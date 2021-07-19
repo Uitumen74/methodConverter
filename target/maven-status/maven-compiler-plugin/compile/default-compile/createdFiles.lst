@@ -1,7 +1,6 @@
 com\mobicom\httpmethodconverter\RestActivator.class
 com\mobicom\httpmethodconverter\resource\Resource.class
 com\mobicom\httpmethodconverter\worker\Worker.class
-com\mobicom\httpmethodconverter\config\LoggerUtil.class
 com\mobicom\httpmethodconverter\config\ConfigController.class
 com\mobicom\httpmethodconverter\models\DataSendRequest.class
 com\mobicom\httpmethodconverter\worker\ConfigEnums.class

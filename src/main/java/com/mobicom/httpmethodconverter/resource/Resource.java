@@ -52,7 +52,7 @@ public class Resource {
         String result = "Record entered: " + json;
 //        LoggerUtil.getLogger().info("recieved: ", json);
 //        LoggerUtil.getLogger().info("response: ", result);
-        ConfigController.getLogger().info(json);
+        // LOG.info(json);
         return Response.status(201).entity(result).build();
     }
     

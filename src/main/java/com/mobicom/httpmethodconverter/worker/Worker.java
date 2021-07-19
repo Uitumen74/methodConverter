@@ -1,11 +1,9 @@
 package com.mobicom.httpmethodconverter.worker;
 
 import com.mobicom.httpmethodconverter.config.ConfigController;
-import com.mobicom.httpmethodconverter.models.DataSendRequest;
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.text.DateFormat;
@@ -17,7 +15,8 @@ import java.util.List;
 import java.util.Map;
 import javax.ejb.Stateless;
 import javax.ws.rs.core.MultivaluedMap;
-import org.json.JSONObject;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  *
@@ -26,14 +25,12 @@ import org.json.JSONObject;
 @Stateless
 public class Worker {
 
-    private String ruleId;
+    private static final Logger LOG = LogManager.getLogger(Worker.class.getCanonicalName());
 
-    private DataSendRequest sendReq;
 //
 //    public Worker(DataSendRequest sendReq) {
 //        this.sendReq = sendReq;
 //    }
-
     public void ruleIdChecker(List<String> ruleIds) throws Exception {
         if (ruleIds.size() > 1 || ruleIds.isEmpty()) {
             throw new Exception();
@@ -107,9 +104,9 @@ public class Worker {
 
             //Response
             int reponseCode = con.getResponseCode();
-            ConfigController.getLogger().info("Sending Post request to URL : " + url);
-            ConfigController.getLogger().info("Post Data : " + content);
-            ConfigController.getLogger().info("Response Code : " + reponseCode);
+            LOG.info("Sending Post request to URL : " + url);
+            LOG.info("Post Data : " + content);
+            LOG.info("Response Code : " + reponseCode);
 
             BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
             String output;
