@@ -52,7 +52,7 @@ public class Resource {
         String result = "Record entered: " + json;
 //        LoggerUtil.getLogger().info("recieved: ", json);
 //        LoggerUtil.getLogger().info("response: ", result);
-        ConfigController.getLog(json);
+        ConfigController.getLogger().info(json);
         return Response.status(201).entity(result).build();
     }
     
@@ -98,7 +98,6 @@ public class Resource {
             work.requestSender(params);
 
             //        final String uuid = UUID.randomUUID().toString().replace("-", "");
-          
         } catch (Exception e) {
             //todo log
             responseString = "Failed: " + e.getMessage();

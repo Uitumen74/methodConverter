@@ -14,6 +14,7 @@ public class LoggerUtil {
 
     private static Logger logger = null;
 
+    
     public static void initialLogger(String loggerPath) throws IOException {
 
         Configurator.initialize(null, loggerPath);

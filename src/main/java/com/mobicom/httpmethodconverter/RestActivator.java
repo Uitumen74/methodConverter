@@ -32,7 +32,7 @@ public class RestActivator extends Application implements ServletContextListener
         System.out.println(String.format("%s.Logger configuration: file=%s", APP_NAME, loggerConfigPath));
 
         try {
-            Configurator.initialize(null, loggerConfigPath);
+            ConfigController.initialLogger(loggerConfigPath);
             System.out.println(APP_NAME + ".Logger initialized.");
 
             return true;

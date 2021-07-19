@@ -8,6 +8,8 @@ import java.util.Date;
 import java.util.Properties;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.ThreadContext;
+import org.apache.logging.log4j.core.config.Configurator;
 
 /**
  *
@@ -15,7 +17,8 @@ import org.apache.logging.log4j.Logger;
  */
 public class ConfigController {
 
-    private static final Logger LOG = LogManager.getLogger(ConfigController.class.getCanonicalName());
+//    private static final Logger LOG = LogManager.getLogger(ConfigController.class.getCanonicalName());
+    private static Logger LOG = null;
 
     private static final ConfigController instance = new ConfigController();
 
@@ -27,8 +30,17 @@ public class ConfigController {
         return instance;
     }
 
-    public static void getLog(String logText) {
-        LOG.info(logText, appConfig);
+    public static void initialLogger(String loggerPath) throws IOException {
+
+        Configurator.initialize(null, loggerPath);
+
+        ThreadContext.put("rid", "httpMethodConverter");
+        LOG = LogManager.getLogger(ConfigController.class.getCanonicalName());
+        LOG.info("Logger successfully loaded.");
+    }
+
+    public static Logger getLogger() {
+        return LOG;
     }
 
     public String reload() {

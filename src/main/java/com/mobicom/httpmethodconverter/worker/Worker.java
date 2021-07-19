@@ -70,7 +70,17 @@ public class Worker {
                     jsonString = jsonString.replace(key, param.getValue());
                 }
             }
-            sendingPostRequest(jsonString);
+            String method = ConfigController.getInstance().getString((ConfigEnums.METHOD + requestParams.get((RequestEnums.ruleId).toString())));
+            String url = ConfigController.getInstance().getString((ConfigEnums.URL + requestParams.get((RequestEnums.ruleId).toString())));
+            switch (method) {
+                case "GET":
+                    break;
+                case "POST":
+                    sendPostRequest(jsonString, url);
+                    break;
+                default:
+                    break;
+            }
 //            System.out.println(n);
         } catch (Exception e) {
             System.out.println("Aldaa bol : " + e.getMessage());
@@ -78,8 +88,7 @@ public class Worker {
         }
     }
 
-    private void sendingPostRequest(String content) {
-        String url = "http://127.0.0.1:8080/httpMethodConverter/rest/api/recievereq";
+    private void sendPostRequest(String content, String url) {
         try {
             URL obj = new URL(url);
             HttpURLConnection con = (HttpURLConnection) obj.openConnection();
@@ -98,9 +107,9 @@ public class Worker {
 
             //Response
             int reponseCode = con.getResponseCode();
-//            LoggerUtil.getLogger().info("Sending Post request to URL : " + url);
-//            LoggerUtil.getLogger().info("Post Data : " + content);
-//            LoggerUtil.getLogger().info("Response Code : " + reponseCode);
+            ConfigController.getLogger().info("Sending Post request to URL : " + url);
+            ConfigController.getLogger().info("Post Data : " + content);
+            ConfigController.getLogger().info("Response Code : " + reponseCode);
 
             BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
             String output;
