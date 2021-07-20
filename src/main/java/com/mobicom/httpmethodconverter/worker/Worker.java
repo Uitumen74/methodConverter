@@ -60,7 +60,6 @@ public class Worker {
                     throw new Exception();
             }
         } catch (Exception e) {
-            LOG.error(Messages.sendRequestErr);
             throw new Exception();
         }
     }

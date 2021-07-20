@@ -84,7 +84,7 @@ public class Resource {
             //Request ilgeeh
             work.requestSender(queryParams);
         } catch (Exception e) {
-            LOG.error("Execution failed", e);
+            LOG.error("Execution failed: " + e.getMessage());
             responseString = "Failed: " + e.getMessage();
         }
         return Response.ok(responseString).build();

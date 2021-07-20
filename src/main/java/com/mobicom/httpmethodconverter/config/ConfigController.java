@@ -1,5 +1,6 @@
 package com.mobicom.httpmethodconverter.config;
 
+import com.mobicom.httpmethodconverter.worker.Messages;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.text.ParseException;
@@ -50,18 +51,11 @@ public class ConfigController {
         return appConfig;
     }
 
-    public Date getDatetime(String name) throws ParseException {
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        String value = properties.getProperty(name);
-        return sdf.parse(value);
-    }
-
-    public int getInteger(String name, int _default) {
-        String result = properties.getProperty(name, Integer.toString(_default));
-        return Integer.parseInt(result);
-    }
-
     public String getString(String name) {
-        return properties.getProperty(name);
+        String strName = properties.getProperty(name);
+        if (strName == null) {
+            LOG.error(Messages.configParamErr);
+        }
+        return strName;
     }
 }
