@@ -17,7 +17,7 @@ import org.apache.logging.log4j.core.config.Configurator;
 @ApplicationPath("rest")
 public class RestActivator extends Application implements ServletContextListener {
 
-    static private final String APP_NAME = "APP";
+    static private final String APP_NAME = "httpMethodConverter";
 
     @Override
     public void contextInitialized(ServletContextEvent event) {

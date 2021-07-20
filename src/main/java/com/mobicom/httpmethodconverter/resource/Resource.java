@@ -1,15 +1,8 @@
 package com.mobicom.httpmethodconverter.resource;
 
 import com.mobicom.httpmethodconverter.config.ConfigController;
-import com.mobicom.httpmethodconverter.worker.RequestEnums;
 import com.mobicom.httpmethodconverter.worker.Worker;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.Enumeration;
-import java.util.List;
-import java.util.Map;
+import java.util.UUID;
 import javax.ejb.EJB;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
@@ -22,6 +15,9 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.ThreadContext;
 
 /**
  *
@@ -29,21 +25,17 @@ import javax.ws.rs.core.UriInfo;
  */
 @Path("api")
 public class Resource {
-    
+
+    private static final Logger LOG = LogManager.getLogger(Resource.class.getCanonicalName());
+
     @EJB
     Worker work;
-    private String responseString = "ok";
-    
+
     @Context
     private HttpServletRequest httpServletRequest;
 
-//    @Path("test")
-//    @POST
-//    @Consumes(MediaType.APPLICATION_JSON)
-//    @Produces(MediaType.APPLICATION_JSON)
-//    public Response test() {
-//        return Response.ok().build();
-//    }
+    private String responseString = "ok";
+
     @Path("recievereq")
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
@@ -55,54 +47,46 @@ public class Resource {
         // LOG.info(json);
         return Response.status(201).entity(result).build();
     }
-    
+
     @Path("admin/config/reload/file")
     @GET
     @Produces(MediaType.TEXT_PLAIN)
     public Response configFileReload(@Context UriInfo ui) throws Exception {
         return Response.ok(ConfigController.getInstance().reload()).build();
     }
-    
-    @Path("receive")
+
+//    @Path("receive")
+//    @GET
+//    @Produces(MediaType.TEXT_PLAIN)
+//    public Response receiveGET(@Context UriInfo ui) throws Exception {
+//
+//        try {
+//            Enumeration parameters = httpServletRequest.getParameterNames();
+//            while (parameters.hasMoreElements()) {
+//                Object pname = parameters.nextElement();
+//                System.out.println("name=" + pname + ", class=" + pname.getClass().getCanonicalName());
+//            }
+//
+//        } catch (Exception e) {
+//            responseString = "Failed: " + e.getMessage();
+//        }
+//
+//        return Response.ok(responseString).build();
+//    }
     @GET
-    @Produces(MediaType.TEXT_PLAIN)
-    public Response receiveGET(@Context UriInfo ui) throws Exception {
-        
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getMethodRequest(@Context UriInfo ui) {
         try {
-            Enumeration parameters = httpServletRequest.getParameterNames();
-            while (parameters.hasMoreElements()) {
-                Object pname = parameters.nextElement();
-                System.out.println("name=" + pname + ", class=" + pname.getClass().getCanonicalName());
-            }
-            
-        } catch (Exception e) {
-            responseString = "Failed: " + e.getMessage();
-        }
-        
-        return Response.ok(responseString).build();
-    }
-    
-    @Path("recharge")
-    @GET
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response recharge(@Context UriInfo ui) {
-        try {
-            
+            final String uuid = UUID.randomUUID().toString().replace("-", "");
+            ThreadContext.put("requestid", uuid);
+            ThreadContext.put("ipaddress", httpServletRequest.getLocalAddr());
             MultivaluedMap<String, String> queryParams = ui.getQueryParameters();
-            List<String> ruleIds = queryParams.get((RequestEnums.ruleId).toString());
-            Map<String, String> params = Worker.prepareParameters(queryParams);
-
-            //RULEID-g shalgaj bna
-            work.ruleIdChecker(ruleIds);
-            
-            work.requestSender(params);
-
-            //        final String uuid = UUID.randomUUID().toString().replace("-", "");
+            //Request ilgeeh
+            work.requestSender(queryParams);
         } catch (Exception e) {
-            //todo log
+            LOG.error("Execution failed", e);
             responseString = "Failed: " + e.getMessage();
         }
-        //todo log
         return Response.ok(responseString).build();
     }
 }

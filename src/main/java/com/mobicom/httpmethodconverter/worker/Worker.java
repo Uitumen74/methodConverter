@@ -27,31 +27,11 @@ public class Worker {
 
     private static final Logger LOG = LogManager.getLogger(Worker.class.getCanonicalName());
 
-//
-//    public Worker(DataSendRequest sendReq) {
-//        this.sendReq = sendReq;
-//    }
-    public void ruleIdChecker(List<String> ruleIds) throws Exception {
-        if (ruleIds.size() > 1 || ruleIds.isEmpty()) {
-            throw new Exception();
-        }
-        if (ConfigController.getInstance().getString(ConfigEnums.RULEID + ruleIds.get(0)).isEmpty()) {
-            throw new Exception();
-        }
-    }
-
-    static public Map<String, String> prepareParameters(MultivaluedMap<String, String> queryParameters) {
-
-        Map<String, String> parameters = new HashMap<>();
-
-        for (String str : queryParameters.keySet()) {
-            parameters.put(str, queryParameters.getFirst(str));
-        }
-        return parameters;
-    }
-
-    public void requestSender(Map<String, String> requestParams) {
+    public void requestSender(MultivaluedMap<String, String> queryParams) throws Exception {
+        List<String> ruleIds = queryParams.get((RequestEnums.ruleId).toString());
+        Map<String, String> requestParams = prepareParameters(queryParams);
         try {
+            ruleIdChecker(ruleIds);
             Date date = Calendar.getInstance().getTime();
             DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss Z");
             String strDate = dateFormat.format(date);
@@ -76,16 +56,37 @@ public class Worker {
                     sendPostRequest(jsonString, url);
                     break;
                 default:
-                    break;
+                    LOG.error(Messages.configMethodErr);
+                    throw new Exception();
             }
-//            System.out.println(n);
         } catch (Exception e) {
-            System.out.println("Aldaa bol : " + e.getMessage());
-            e.printStackTrace();
+            LOG.error(Messages.sendRequestErr);
+            throw new Exception();
         }
     }
 
-    private void sendPostRequest(String content, String url) {
+    private void ruleIdChecker(List<String> ruleIds) throws Exception {
+        if (ruleIds.size() > 1 || ruleIds.isEmpty()) {
+            LOG.error(Messages.ruleIdSizeErr);
+            throw new Exception();
+        }
+        if (ConfigController.getInstance().getString(ConfigEnums.RULEID + ruleIds.get(0)).isEmpty()) {
+            LOG.error(Messages.ruleIdConfigErr);
+            throw new Exception();
+        }
+    }
+
+    static public Map<String, String> prepareParameters(MultivaluedMap<String, String> queryParameters) {
+
+        Map<String, String> parameters = new HashMap<>();
+
+        for (String str : queryParameters.keySet()) {
+            parameters.put(str, queryParameters.getFirst(str));
+        }
+        return parameters;
+    }
+
+    private void sendPostRequest(String content, String url) throws Exception {
         try {
             URL obj = new URL(url);
             HttpURLConnection con = (HttpURLConnection) obj.openConnection();
@@ -117,9 +118,10 @@ public class Worker {
             }
             in.close();
 
-//            LoggerUtil.getLogger().info("Response : " + response.toString());
+            LOG.info("Response : " + response.toString());
         } catch (Exception e) {
-//            LoggerUtil.getLogger().error("Exception on sendingPostRequest : " + e);
+            LOG.error(Messages.postMethodSendErr);
+            throw new Exception();
         }
     }
 

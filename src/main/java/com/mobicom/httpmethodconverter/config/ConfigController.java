@@ -61,12 +61,7 @@ public class ConfigController {
         return Integer.parseInt(result);
     }
 
-    public String getString(String name) throws Exception {
-        try {
-            return properties.getProperty(name);
-        } catch (Exception E) {
-            //todo log config dotor bhgu bn
-            throw new Exception();
-        }
+    public String getString(String name) {
+        return properties.getProperty(name);
     }
 }
