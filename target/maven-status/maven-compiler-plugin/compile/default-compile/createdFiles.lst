@@ -1,7 +1,7 @@
-com\mobicom\httpmethodconverter\RestActivator.class
-com\mobicom\httpmethodconverter\resource\Resource.class
-com\mobicom\httpmethodconverter\worker\Messages.class
-com\mobicom\httpmethodconverter\worker\Worker.class
-com\mobicom\httpmethodconverter\config\ConfigController.class
-com\mobicom\httpmethodconverter\worker\ConfigEnums.class
-com\mobicom\httpmethodconverter\worker\RequestEnums.class
+mn\mobicom\httpmethodconverter\resource\Resource.class
+mn\mobicom\httpmethodconverter\worker\RequestEnums.class
+mn\mobicom\httpmethodconverter\worker\Worker.class
+mn\mobicom\httpmethodconverter\config\ConfigController.class
+mn\mobicom\httpmethodconverter\RestActivator.class
+mn\mobicom\httpmethodconverter\worker\ConfigEnums.class
+mn\mobicom\httpmethodconverter\worker\Messages.class
