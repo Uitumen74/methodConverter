@@ -3,20 +3,14 @@ package mn.mobicom.httpmethodconverter.config;
 import mn.mobicom.httpmethodconverter.worker.Messages;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.Properties;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import mn.mobicom.cmn.logger.Log;
 
 /**
  *
  * @author uitumen.t
  */
 public class ConfigController {
-
-    private static final Logger LOG = LogManager.getLogger(ConfigController.class.getCanonicalName());
 
     private static final ConfigController instance = new ConfigController();
 
@@ -34,17 +28,16 @@ public class ConfigController {
             inputStream = new FileInputStream(appConfig);
             properties = new Properties();
             properties.load(inputStream);
-
-            LOG.info("Config reloaded: {}", appConfig);
+            Log.create("Config reloaded: {" + appConfig + "}").add("result", "SUCCESS").info();
         } catch (IOException ex) {
-            LOG.error("Config reload error", ex);
+            Log.create("Config reload error: " + ex).add("result", "FAILED").error();
         } finally {
             try {
                 if (inputStream != null) {
                     inputStream.close();
                 }
             } catch (IOException ex) {
-                LOG.error("Config reload, inputStream close error", ex);
+                Log.create("Config reload, inputStream close error").add("result", "FAILED").error();
             }
         }
 
@@ -54,7 +47,7 @@ public class ConfigController {
     public String getString(String name) {
         String strName = properties.getProperty(name);
         if (strName == null) {
-            LOG.error(Messages.configParamErr);
+            Log.create(Messages.configParamErr).add("result", "FAILED").error();
         }
         return strName;
     }

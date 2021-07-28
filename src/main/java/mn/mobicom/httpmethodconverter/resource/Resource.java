@@ -36,6 +36,7 @@ public class Resource {
 
     private String responseString = "ok";
     private int responseCode = 200;
+    final String uuid = UUID.randomUUID().toString().replace("-", "");
 
     @Path("recievereq")
     @POST
@@ -56,20 +57,19 @@ public class Resource {
         return Response.ok(ConfigController.getInstance().reload()).build();
     }
 
+    @Path("send/request")
     @GET
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
     public Response getMethodRequest(@Context UriInfo ui) {
         try {
-            final String uuid = UUID.randomUUID().toString().replace("-", "");
             ThreadContext.put("requestid", uuid);
             ThreadContext.put("ipaddress", httpServletRequest.getLocalAddr());
             MultivaluedMap<String, String> queryParams = ui.getQueryParameters();
             //Request ilgeeh
             work.requestSender(queryParams);
         } catch (Exception e) {
-            LOG.error("Execution failed: " + e.getMessage());
             responseString = "Failed: " + e.getMessage();
-            responseCode = 400;
+            responseCode = 406;
         }
         return Response.status(responseCode).entity(responseString).build();
     }

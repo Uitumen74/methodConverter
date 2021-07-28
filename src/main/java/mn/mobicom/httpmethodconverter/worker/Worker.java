@@ -3,6 +3,7 @@ package mn.mobicom.httpmethodconverter.worker;
 import mn.mobicom.httpmethodconverter.config.ConfigController;
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -15,8 +16,7 @@ import java.util.List;
 import java.util.Map;
 import javax.ejb.Stateless;
 import javax.ws.rs.core.MultivaluedMap;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import mn.mobicom.cmn.logger.Log;
 
 /**
  *
@@ -25,18 +25,14 @@ import org.apache.logging.log4j.Logger;
 @Stateless
 public class Worker {
 
-    private static final Logger LOG = LogManager.getLogger(Worker.class.getCanonicalName());
-
     public void requestSender(MultivaluedMap<String, String> queryParams) throws Exception {
         List<String> ruleIds = queryParams.get((RequestEnums.ruleId).toString());
         Map<String, String> requestParams = prepareParameters(queryParams);
         try {
             ruleIdChecker(ruleIds);
-            Date date = Calendar.getInstance().getTime();
-            DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss Z");
-            String strDate = dateFormat.format(date);
-            String jsonString = ConfigController.getInstance().getString((ConfigEnums.BODY + requestParams.get((RequestEnums.ruleId).toString())));
-            jsonString = jsonString.replace("$date", strDate);
+            String strDate = getDate();
+            String jsonString = ConfigController.getInstance().getString((ConfigEnums.BODY + requestParams.get((RequestEnums.ruleId)
+                    .toString()))).replace("$date", strDate);
 
             for (Map.Entry<String, String> param : requestParams.entrySet()) {
                 String key = "$" + param.getKey();
@@ -47,6 +43,12 @@ public class Worker {
                     jsonString = jsonString.replace(key, param.getValue());
                 }
             }
+
+            if (jsonString.contains("$")) {
+                Log.create(Messages.queryParamErr).add("result", "FAILED").error();
+                throw new Exception();
+            }
+
             String method = ConfigController.getInstance().getString((ConfigEnums.METHOD + requestParams.get((RequestEnums.ruleId).toString())));
             String url = ConfigController.getInstance().getString((ConfigEnums.URL + requestParams.get((RequestEnums.ruleId).toString())));
             switch (method) {
@@ -56,7 +58,7 @@ public class Worker {
                     sendPostRequest(jsonString, url);
                     break;
                 default:
-                    LOG.error(Messages.configMethodErr);
+                    Log.create(Messages.configMethodErr).add("result", "FAILED").error();
                     throw new Exception();
             }
         } catch (Exception e) {
@@ -65,13 +67,11 @@ public class Worker {
     }
 
     private void ruleIdChecker(List<String> ruleIds) throws Exception {
-        if (ruleIds.size() > 1 || ruleIds.isEmpty()) {
-            LOG.error(Messages.ruleIdSizeErr);
+        if (ruleIds == null || ruleIds.size() > 1 || ruleIds.isEmpty()) {
+            Log.create(Messages.ruleIdSizeErr).add("result", "FAILED").error();
             throw new Exception();
         }
         if (ConfigController.getInstance().getString(ConfigEnums.RULEID + ruleIds.get(0)).isEmpty()) {
-            LOG.error(Messages.ruleIdConfigErr);
-            throw new Exception();
         }
     }
 
@@ -104,10 +104,10 @@ public class Worker {
 
             //Response
             int reponseCode = con.getResponseCode();
-            LOG.info("Sending Post request to URL : " + url);
-            LOG.info("Post Data : " + content);
-            LOG.info("Response Code : " + reponseCode);
-
+            Log.create("Sending Post request")
+                    .add("url", url)
+                    .add("data", content)
+                    .add("code", reponseCode).info();
             BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
             String output;
             StringBuffer response = new StringBuffer();
@@ -117,9 +117,9 @@ public class Worker {
             }
             in.close();
 
-            LOG.info("Response : " + response.toString());
-        } catch (Exception e) {
-            LOG.error(Messages.postMethodSendErr);
+            Log.create("Response").add("body", response.toString()).info();
+        } catch (IOException e) {
+            Log.create(Messages.postMethodSendErr).add("result", "FAILED").error();
             throw new Exception();
         }
     }
@@ -127,8 +127,15 @@ public class Worker {
     private String trimIsdn(String isdn) {
         isdn = isdn.trim();
         if (isdn.length() > 8 && isdn.substring(0, 3).equals("976")) {
-            return isdn.substring(3, isdn.length());
+            isdn = isdn.substring(3, isdn.length());
         }
-        return isdn;
+        return "976" + isdn;
+    }
+
+    private String getDate() {
+        Date date = Calendar.getInstance().getTime();
+        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss Z");
+        String strDate = dateFormat.format(date);
+        return strDate;
     }
 }
