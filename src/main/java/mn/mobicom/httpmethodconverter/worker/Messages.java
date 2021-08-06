@@ -12,4 +12,5 @@ public class Messages {
     static public final String sendRequestErr = "request bolovsruulah uyd aldaa garlaa.";
     static public final String configParamErr = "huseltiin parametern config file-n parameter dotor oldoogui.";
     static public final String queryParamErr = "huseltiin query parameter config file-n body dotor oldoogui.";
+    static public final String urlOrContentNullErr = "json string esvel url hooson baina.";
 }
