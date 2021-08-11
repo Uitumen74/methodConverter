@@ -2,6 +2,9 @@ E:\java-projects\NetBeansProjects\httpMethodConverter\httpMethodConverter\src\ma
 E:\java-projects\NetBeansProjects\httpMethodConverter\httpMethodConverter\src\main\java\mn\mobicom\httpmethodconverter\resource\Resource.java
 E:\java-projects\NetBeansProjects\httpMethodConverter\httpMethodConverter\src\main\java\mn\mobicom\httpmethodconverter\RestActivator.java
 E:\java-projects\NetBeansProjects\httpMethodConverter\httpMethodConverter\src\main\java\mn\mobicom\httpmethodconverter\worker\Messages.java
+E:\java-projects\NetBeansProjects\httpMethodConverter\httpMethodConverter\src\main\java\mn\mobicom\httpmethodconverter\ex\ConverterException.java
+E:\java-projects\NetBeansProjects\httpMethodConverter\httpMethodConverter\src\main\java\mn\mobicom\httpmethodconverter\ex\ErrorCode.java
 E:\java-projects\NetBeansProjects\httpMethodConverter\httpMethodConverter\src\main\java\mn\mobicom\httpmethodconverter\worker\ConfigEnums.java
+E:\java-projects\NetBeansProjects\httpMethodConverter\httpMethodConverter\src\main\java\mn\mobicom\httpmethodconverter\ex\ResponseDto.java
 E:\java-projects\NetBeansProjects\httpMethodConverter\httpMethodConverter\src\main\java\mn\mobicom\httpmethodconverter\worker\RequestEnums.java
 E:\java-projects\NetBeansProjects\httpMethodConverter\httpMethodConverter\src\main\java\mn\mobicom\httpmethodconverter\worker\Worker.java

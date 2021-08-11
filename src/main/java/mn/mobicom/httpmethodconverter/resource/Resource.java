@@ -15,6 +15,8 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
+import mn.mobicom.httpmethodconverter.ex.ConverterException;
+import mn.mobicom.httpmethodconverter.ex.ResponseDto;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.ThreadContext;
@@ -26,16 +28,12 @@ import org.apache.logging.log4j.ThreadContext;
 @Path("api")
 public class Resource {
 
-    private static final Logger LOG = LogManager.getLogger(Resource.class.getCanonicalName());
-
     @EJB
     Worker work;
 
     @Context
     private HttpServletRequest httpServletRequest;
 
-    private String responseString = "ok";
-    private int responseCode = 200;
     final String uuid = UUID.randomUUID().toString().replace("-", "");
 
     @Path("recievereq")
@@ -60,17 +58,11 @@ public class Resource {
     @Path("send/request")
     @GET
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response getMethodRequest(@Context UriInfo ui) {
-        try {
-            ThreadContext.put("requestid", uuid);
-            ThreadContext.put("ipaddress", httpServletRequest.getLocalAddr());
-            MultivaluedMap<String, String> queryParams = ui.getQueryParameters();
-            //Request ilgeeh
-            work.requestSender(queryParams);
-        } catch (Exception e) {
-            responseString = "Failed: " + e.getMessage();
-            responseCode = 406;
-        }
-        return Response.status(responseCode).entity(responseString).build();
+    public ResponseDto getMethodRequest(@Context UriInfo ui) throws ConverterException {
+        ThreadContext.put("requestid", uuid);
+        ThreadContext.put("ipaddress", httpServletRequest.getLocalAddr());
+        MultivaluedMap<String, String> queryParams = ui.getQueryParameters();
+        ResponseDto response = work.requestSender(queryParams); //Request ilgeeh
+        return response;
     }
 }

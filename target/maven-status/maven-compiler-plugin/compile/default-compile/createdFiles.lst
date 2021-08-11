@@ -1,3 +1,6 @@
+mn\mobicom\httpmethodconverter\ex\ConverterException.class
+mn\mobicom\httpmethodconverter\ex\ResponseDto.class
+mn\mobicom\httpmethodconverter\ex\ErrorCode.class
 mn\mobicom\httpmethodconverter\resource\Resource.class
 mn\mobicom\httpmethodconverter\worker\RequestEnums.class
 mn\mobicom\httpmethodconverter\worker\Worker.class
