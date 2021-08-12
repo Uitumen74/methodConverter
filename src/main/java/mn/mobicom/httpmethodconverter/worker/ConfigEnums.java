@@ -14,5 +14,6 @@ public enum ConfigEnums {
     URL,
     METHOD,
     CONTENTTYPE,
-    BODY
+    BODY,
+    HEADER
 }

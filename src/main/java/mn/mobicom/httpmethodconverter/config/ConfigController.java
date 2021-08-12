@@ -34,7 +34,7 @@ public class ConfigController {
             inputStream = new FileInputStream(appConfig);
             properties = new Properties();
             properties.load(inputStream);
-            setTestIsdn("TEST_ISDN");
+            setTestIsdn("TEST_MODE");
             Log.create("Config reloaded: {" + appConfig + "}").add("result", "SUCCESS").info();
         } catch (IOException ex) {
             Log.create("Config reload error: " + ex).add("result", "FAILED").error();
@@ -55,14 +55,21 @@ public class ConfigController {
         return !(isdnList == null || isdnList.isEmpty());
     }
 
-    public void setTestIsdn(String testIsdn) {
-        String strIsdn = properties.getProperty(testIsdn);
-        if (isdnList != null) {
-            isdnList = null;
+    public void setTestIsdn(String testMode) {
+        String strMode = properties.getProperty(testMode);
+        String strIsdn = properties.getProperty("TEST_ISDN");
+        switch (strMode) {
+            case "1":
+                isdnList = Arrays.asList(strIsdn.split(";"));
+                break;
+            case "0":
+                isdnList = null;
+                break;
+            default:
+                isdnList = null;
+                break;
         }
-        if (strIsdn != null) {
-            isdnList = Arrays.asList(strIsdn.split(";"));
-        }
+
     }
 
     public List<String> getTestIsdn() {

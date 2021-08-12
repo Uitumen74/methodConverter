@@ -9,11 +9,15 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import javax.ejb.Stateless;
 import javax.ws.rs.core.MultivaluedMap;
 import mn.mobicom.cmn.logger.Log;
@@ -28,48 +32,71 @@ import mn.mobicom.httpmethodconverter.ex.ResponseDto;
 @Stateless
 public class Worker {
 
+    public static final List<String> configFunctions = Collections.unmodifiableList(
+            Arrays.asList(new String[]{"@remove976", "@currentdate", "@getisdn", "@currentdate"}));
+
     public ResponseDto requestSender(MultivaluedMap<String, String> queryParams) throws ConverterException {
         try {
             List<String> ruleIds = queryParams.get((RequestEnums.ruleId).toString());
             Map<String, String> requestParams = prepareParameters(queryParams);
 
             ruleIdChecker(ruleIds);
-            String strDate = getDate();
-            String jsonString = ConfigController.getInstance().getString((ConfigEnums.BODY + requestParams.get((RequestEnums.ruleId)
-                    .toString()))).replace("$date", strDate);
-
+            String bodyString = ConfigController.getInstance().getString((ConfigEnums.BODY + requestParams.get((RequestEnums.ruleId)
+                    .toString())));
+            String isdnStr = null;
+            String strDate = null;
+            for (String func : configFunctions) {
+                if (bodyString.contains(func)) {
+                    String confRes = getStrFromConf(bodyString, func);
+                    switch (func) {
+                        case "@remove976":
+                            isdnStr = confRes;
+                            break;
+                        case "@currentdate":
+                            strDate = getDate(confRes);
+                            bodyString = bodyString.replace("@currentdate(" + confRes + ")", strDate);
+                            break;
+                    }
+                }
+            }
+            String urlBody = ConfigController.getInstance().getString((ConfigEnums.URL + requestParams.get((RequestEnums.ruleId).toString())));
             for (Map.Entry<String, String> param : requestParams.entrySet()) {
                 String key = "$" + param.getKey();
-                if (ConfigController.getInstance().checkTestIsdn() && key.equals("$isdn")) {
+
+                if (ConfigController.getInstance().checkTestIsdn() && key.equals(isdnStr)) {
                     List<String> isdnList = ConfigController.getInstance().getTestIsdn();
                     if (!isdnList.contains(trimIsdn(param.getValue()))) {
                         throw new ConverterException(ErrorCode.FAILED, Messages.testIsdnNullErr);
                     }
                 }
-                if (!jsonString.contains(key) && !key.equals("$ruleId")) {
+                if (!bodyString.contains(key) && !key.equals("$ruleId")) {
                     Log.create(String.format(Messages.queryParamNullErr, key)).add("result", "FAILED").error();
                     throw new ConverterException(ErrorCode.FAILED, String.format(Messages.queryParamNullErr, key));
                 }
-                if (key.equals("$isdn")) {
+                if (key.equals(isdnStr)) {
                     String isdn = "976" + trimIsdn(param.getValue());
-                    jsonString = jsonString.replace(key, isdn);
+                    urlBody = urlBody.replace("@remove976(" + isdnStr + ")", isdn);
+                    bodyString = bodyString.replace("@remove976(" + isdnStr + ")", isdn);
                 } else {
-                    jsonString = jsonString.replace(key, param.getValue());
+                    urlBody = urlBody.replace(key, param.getValue());
+                    bodyString = bodyString.replace(key, param.getValue());
                 }
             }
 
-            if (jsonString.contains("$")) {
+            if (bodyString.contains("$")) {
                 Log.create(Messages.queryParamErr).add("result", "FAILED").error();
                 throw new ConverterException(ErrorCode.FAILED, Messages.queryParamErr);
             }
-
             String method = ConfigController.getInstance().getString((ConfigEnums.METHOD + requestParams.get((RequestEnums.ruleId).toString())));
-            String url = ConfigController.getInstance().getString((ConfigEnums.URL + requestParams.get((RequestEnums.ruleId).toString())));
+            String contentType = ConfigController.getInstance().getString((ConfigEnums.CONTENTTYPE + requestParams.get((RequestEnums.ruleId).toString())));
+            String headerBody = ConfigController.getInstance().getString((ConfigEnums.HEADER + requestParams.get((RequestEnums.ruleId).toString())));
+            HashMap<String, String> headerMap = prepareHeader(headerBody);
+//            String url = prepareUrl(urlBody);
             switch (method) {
 //                case "GET":
 //                    break;
                 case "POST":
-                    sendPostRequest(jsonString, url);
+                    sendPostRequest(bodyString, urlBody, contentType, headerMap);
                     break;
                 default:
                     Log.create(Messages.configMethodErr).add("result", "FAILED").error();
@@ -105,17 +132,22 @@ public class Worker {
         return parameters;
     }
 
-    private void sendPostRequest(String content, String url) throws ConverterException {
+    private void sendPostRequest(String content, String url, String contentType, HashMap<String, String> headerMap) throws ConverterException {
         try {
-            if (url == null || content == null || content.isEmpty() || url.isEmpty()) {
+            if (url == null || content == null || contentType == null
+                    || content.isEmpty() || url.isEmpty() || contentType.isEmpty()) {
                 Log.create(Messages.urlOrContentNullErr).add("result", "FAILED").error();
             }
             URL obj = new URL(url);
             HttpURLConnection con = (HttpURLConnection) obj.openConnection();
             //Setting Basic Post request
             con.setRequestMethod("POST");
-            con.setRequestProperty("Accept-Language", "application/json; utf-8");
-            con.setRequestProperty("Content-Type", "application/json");
+            con.setRequestProperty("Accept-Language", contentType);
+            con.setRequestProperty("Content-Type", contentType);
+
+            for (String headerKey : headerMap.keySet()) {
+                con.setRequestProperty(headerKey, headerMap.get(headerKey));
+            }
 
             //Send post request
             con.setDoOutput(true);
@@ -149,6 +181,22 @@ public class Worker {
         }
     }
 
+    private HashMap<String, String> prepareHeader(String headerBody) {
+        HashMap<String, String> map = new HashMap<>();
+        if (headerBody == null || headerBody.isEmpty()) {
+            return map;
+        }
+        List<String> list = Arrays.asList(headerBody.split(";"));
+
+        for (String str : list) {
+            String[] values = str.split(":");
+            String key = values[0];
+            String value = values[1];
+            map.put(key, value);
+        }
+        return map;
+    }
+
     private String trimIsdn(String isdn) {
         if (isdn != null) {
             isdn = isdn.trim();
@@ -161,10 +209,20 @@ public class Worker {
         return isdn;
     }
 
-    private String getDate() {
+    private String getDate(String format) {
         Date date = Calendar.getInstance().getTime();
-        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss Z");
+        DateFormat dateFormat = new SimpleDateFormat(format);
         String strDate = dateFormat.format(date);
         return strDate;
+    }
+
+    private String getStrFromConf(String bodyString, String findString) {
+        Pattern MY_PATTERN = Pattern.compile("\\" + findString + "\\((.*?)\\)");
+        Matcher m = MY_PATTERN.matcher(bodyString);
+        String s = null;
+        while (m.find()) {
+            s = m.group(1);
+        }
+        return s;
     }
 }
