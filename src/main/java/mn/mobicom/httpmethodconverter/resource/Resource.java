@@ -36,18 +36,6 @@ public class Resource {
 
     final String uuid = UUID.randomUUID().toString().replace("-", "");
 
-    @Path("recievereq")
-    @POST
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response service(String json) {
-        String result = "Record entered: " + json;
-//        LoggerUtil.getLogger().info("recieved: ", json);
-//        LoggerUtil.getLogger().info("response: ", result);
-        // LOG.info(json);
-        return Response.status(201).entity(result).build();
-    }
-
     @Path("admin/config/reload/file")
     @GET
     @Produces(MediaType.TEXT_PLAIN)
