@@ -33,7 +33,7 @@ import mn.mobicom.httpmethodconverter.ex.ResponseDto;
 public class Worker {
 
     public static final List<String> configFunctions = Collections.unmodifiableList(
-            Arrays.asList(new String[]{"@remove976", "@currentdate", "@getisdn", "@currentdate"}));
+            Arrays.asList(new String[]{"@remove976", "@currentdate"}));
 
     public ResponseDto requestSender(MultivaluedMap<String, String> queryParams) throws ConverterException {
         try {
@@ -43,6 +43,7 @@ public class Worker {
             ruleIdChecker(ruleIds);
             String bodyString = ConfigController.getInstance().getString((ConfigEnums.BODY + requestParams.get((RequestEnums.ruleId)
                     .toString())));
+            String urlBody = ConfigController.getInstance().getString((ConfigEnums.URL + requestParams.get((RequestEnums.ruleId).toString())));
             String isdnStr = null;
             String strDate = null;
             for (String func : configFunctions) {
@@ -58,8 +59,19 @@ public class Worker {
                             break;
                     }
                 }
+                if (urlBody.contains(func)) {
+                    String confRes = getStrFromConf(urlBody, func);
+                    switch (func) {
+                        case "@remove976":
+                            isdnStr = confRes;
+                            break;
+                        case "@currentdate":
+                            strDate = getDate(confRes);
+                            urlBody = urlBody.replace("@currentdate(" + confRes + ")", strDate);
+                            break;
+                    }
+                }
             }
-            String urlBody = ConfigController.getInstance().getString((ConfigEnums.URL + requestParams.get((RequestEnums.ruleId).toString())));
             for (Map.Entry<String, String> param : requestParams.entrySet()) {
                 String key = "$" + param.getKey();
 
@@ -69,12 +81,12 @@ public class Worker {
                         throw new ConverterException(ErrorCode.FAILED, Messages.testIsdnNullErr);
                     }
                 }
-                if (!bodyString.contains(key) && !key.equals("$ruleId")) {
+                if (!urlBody.contains(key) && !bodyString.contains(key) && !key.equals("$ruleId")) {
                     Log.create(String.format(Messages.queryParamNullErr, key)).add("result", "FAILED").error();
                     throw new ConverterException(ErrorCode.FAILED, String.format(Messages.queryParamNullErr, key));
                 }
                 if (key.equals(isdnStr)) {
-                    String isdn = "976" + trimIsdn(param.getValue());
+                    String isdn = trimIsdn(param.getValue());
                     urlBody = urlBody.replace("@remove976(" + isdnStr + ")", isdn);
                     bodyString = bodyString.replace("@remove976(" + isdnStr + ")", isdn);
                 } else {
@@ -83,7 +95,7 @@ public class Worker {
                 }
             }
 
-            if (bodyString.contains("$")) {
+            if (bodyString.contains("$") || urlBody.contains("$")) {
                 Log.create(Messages.queryParamErr).add("result", "FAILED").error();
                 throw new ConverterException(ErrorCode.FAILED, Messages.queryParamErr);
             }
@@ -91,7 +103,6 @@ public class Worker {
             String contentType = ConfigController.getInstance().getString((ConfigEnums.CONTENTTYPE + requestParams.get((RequestEnums.ruleId).toString())));
             String headerBody = ConfigController.getInstance().getString((ConfigEnums.HEADER + requestParams.get((RequestEnums.ruleId).toString())));
             HashMap<String, String> headerMap = prepareHeader(headerBody);
-//            String url = prepareUrl(urlBody);
             switch (method) {
 //                case "GET":
 //                    break;
@@ -157,11 +168,11 @@ public class Worker {
             wr.close();
 
             //Response
-            int reponseCode = con.getResponseCode();
+            int responseCode = con.getResponseCode();
             Log.create("Sending Post request")
                     .add("vendor-url", url)
                     .add("sending-data", content)
-                    .add("response-code", reponseCode).info();
+                    .add("response-code", responseCode).info();
             BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
             String output;
             StringBuffer response = new StringBuffer();
@@ -173,7 +184,7 @@ public class Worker {
 
             Log.create("Response").add("body", response.toString()).info();
         } catch (IOException e) {
-            Log.create(Messages.postMethodSendErr)
+            Log.create(Messages.postMethodSendErr + e.getMessage())
                     .add("vendor-url", url)
                     .add("sending-data", content)
                     .add("result", "FAILED").error();
